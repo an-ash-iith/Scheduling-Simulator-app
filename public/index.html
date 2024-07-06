@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="heading">
+        <h1>Scheduling Simulator</h1>
+    </div>
+
+    <div class="choice">
+        <div class="dropdown">
+            <button class="dropbtn">Scheduling ⌄</button>
+            <div class="dropdown-content">
+                <a href="#">FCFS scheduling</a>
+                <a href="#">SJF scheduling</a>
+                <a href="#">ROUND ROBIN scheduling</a>
+                <a href="#">MULTI QUEUE scheduling</a>
+            </div>
+        </div>
+
+        <div class="dropdown">
+            <button class="dropbtn">Preemption ⌄</button>
+            <div class="dropdown-content">
+                <a href="#">With preemption</a>
+                <a href="#">Without preemption</a>
+            </div>
+        </div>
+
+        <div class="dropdown">
+            <button class="dropbtn">Number of threads ⌄</button>
+            <div class="dropdown-content">
+                <a href="#">1</a>
+                <a href="#">2</a>
+                <a href="#">3</a>
+                <a href="#">4</a>
+                <a href="#">5</a>
+                <a href="#">6</a>
+                <a href="#">7</a>
+                <a href="#">8</a>
+            </div>
+        </div>
+    </div>
+
+    <form class="form1" action="#">
+        <label for="scheduling">Choose the scheduling algorithm:</label>
+        <select name="sched" id="schedid">
+            <option value="FCFS">FCFS</option>
+            <option value="SJF">SJF</option>
+            <option value="LJF">LJF</option>
+            <option value="RR">ROUND ROBIN</option>
+            <option value="MLQ">MULTI LEVEL QUEUE</option>
+        </select>
+        <br><br>
+
+        <label for="preemption">Choose a preemption:</label>
+        <select name="preempt" id="preemptid">
+            <option value="wprem">without preemption</option>
+            <option value="prem">preemption</option>
+        </select>
+        <br><br>
+
+        <label for="thread">Choose the Number of threads:</label>
+        <select name="thd" id="thdid">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+        </select>
+        <br><br>
+    </form>
+    
+    <div class="argument">
+        <div id="argument-container">
+            <label for="arg1">Start time P1:</label>
+            <input style="margin: 0.5rem;" type="text" id="arg1" name="arg1" class="argument-input"><br>
+        </div>
+        <button onclick="addArgument()">Add Argument</button>
+        <br>
+        <button onclick="runCppProgram()">Run</button>
+    </div>
+
+    <h2>Output:</h2>
+    <pre id="output"></pre>
+
+    <script>
+ let argumentCount = 1;
+
+document.getElementById('schedid').addEventListener('change', function() {
+    const sched = this.value;
+    if (sched === 'RR') {
+        addSlice();
+    } else {
+        removeSlice();
+    }
+});
+
+function addSlice() {
+    const argumentContainer = document.getElementById('argument-container');
+    let existingSlice = document.getElementById('time-slice');
+    if (!existingSlice) {
+        const newArgument = document.createElement('div');
+        newArgument.id = 'time-slice';
+        newArgument.innerHTML = `<label for="slice">Time Slice:</label>
+                                 <input style="margin: 0.5rem;" type="text" id="slice" name="slice" class="argument-input"><br>`;
+        argumentContainer.insertBefore(newArgument, argumentContainer.firstChild);
+    }
+}
+
+function removeSlice() {
+    let existingSlice = document.getElementById('time-slice');
+    if (existingSlice) {
+        existingSlice.remove();
+    }
+}
+
+function addArgument() {
+    argumentCount++;
+    const argumentContainer = document.getElementById('argument-container');
+    const newArgument = document.createElement('div');
+    let label, inputName;
+
+    if (argumentCount % 2 === 0) {
+        label = `Burst time P${Math.floor(argumentCount / 2)}:`;
+        inputName = `burst${Math.floor(argumentCount / 2)}`;
+    } else {
+        label = `Start time P${Math.floor((argumentCount + 1) / 2)}:`;
+        inputName = `start${Math.floor((argumentCount + 1) / 2)}`;
+    }
+
+    newArgument.innerHTML = `<label for="${inputName}">${label}</label>
+                             <input style="margin: 0.5rem;" type="text" id="${inputName}" name="${inputName}" class="argument-input"><br>`;
+    argumentContainer.appendChild(newArgument);
+}
+
+async function runCppProgram() {
+    const sched = document.getElementById('schedid').value;
+    const preempt = document.getElementById('preemptid').value;
+    const thd = document.getElementById('thdid').value;
+
+    const argumentInputs = document.getElementsByClassName('argument-input');
+    const args = Array.from(argumentInputs).map(input => parseFloat(input.value));
+
+    console.log("Scheduling:", sched);
+    console.log("Preemption:", preempt);
+    console.log("Threads:", thd);
+    console.log("Arguments:", args);
+
+    if (args.some(isNaN)) {
+        alert("Please enter valid numerical values for arguments.");
+        return;
+    }
+
+    const response = await fetch('/run_cpp', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ sched, preempt, thd, args })
+    });
+
+    const result = await response.json();
+    console.log("Response:", result);
+    document.getElementById('output').innerText = result.stdout + result.stderr;
+}
+
+</script>
+</body>
+
+<footer><h5>©contributed by Ashwin Kr. & Punit N.</h5></footer>
+</html>
